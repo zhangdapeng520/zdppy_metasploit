@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "zdppy_metasploit"
+version = "0.1.0"
+description = ""
+authors = ["zhangdapeng520 <pygosuperman@outlook.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pymetasploit3 = "^1.0.3"
+zdppy-log = "^0.1.7"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
