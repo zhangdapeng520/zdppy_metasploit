@@ -113,10 +113,18 @@ category = "main"
 optional = false
 python-versions = ">=3.9,<4.0"
 
+[[package]]
+name = "zdppy-yaml"
+version = "0.1.1"
+description = "Python读取yaml配置，无任何依赖，符合中国人使用习惯"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "66a461827583c090c7092327d579426a7d6bf1fbbbb69ed957b51836ceb974d7"
+content-hash = "045ac33bda06e576d4c20600d60b7282b7e896bb31148c87da7ff83313124a6b"
 
 [metadata.files]
 certifi = [
@@ -194,4 +202,8 @@ urllib3 = [
 zdppy-log = [
     {file = "zdppy_log-0.1.7-py3-none-any.whl", hash = "sha256:21a00f00dfbf4f185c839ee34a483c02661d5dd7854ec4735b51ad3fbd312414"},
     {file = "zdppy_log-0.1.7.tar.gz", hash = "sha256:d129a020a213229b056215d6443f51076be76fe778eb3a2aaf6bdeadd5680cb8"},
+]
+zdppy-yaml = [
+    {file = "zdppy_yaml-0.1.1-py3-none-any.whl", hash = "sha256:05b5037ed8892864d003c1339031e7de44a2b3d4d955e90b17fe4f81996b278a"},
+    {file = "zdppy_yaml-0.1.1.tar.gz", hash = "sha256:cd95ece7f8b20269096ca761edd2ced5915fb1ee254f608a67c1d4e89132fce4"},
 ]

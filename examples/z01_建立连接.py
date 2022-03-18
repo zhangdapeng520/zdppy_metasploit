@@ -1,5 +1,6 @@
 from zdppy_metasploit import Metasploit
 
+# 建立连接方式1
 msf = Metasploit(
     username="msf",
     password="zhangdapeng",
@@ -13,3 +14,23 @@ msf = Metasploit(
 )
 
 print(msf.client)
+
+# 建立连接方式2
+from zdppy_yaml import Yaml
+
+y = Yaml()
+print(y.config)
+msf2 = Metasploit(**y.config)
+print(msf2.client)
+
+# 建立连接的方式3
+from zdppy_metasploit import new_metasploit
+
+msf3 = new_metasploit(config="config/config.yaml", config_secret="config/secret/.config.yaml")
+print(msf3.client)
+
+# 建立连接的方式4
+from zdppy_metasploit import new_metasploit
+
+msf4 = new_metasploit()
+print(msf4.client)

@@ -14,7 +14,7 @@ class Metasploit:
                  encoding: str = "utf8",
                  headers: dict = {"Content-type": "binary/message-pack"},
                  debug: bool = True,
-                 log_file_path: str = "logs/zdppy/zdppy_metasploit.log"
+                 log_file_path: str = "logs/zdppy/zdppy_metasploit.log",
                  ):
         """
         创建MSF核心对象

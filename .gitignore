@@ -134,3 +134,4 @@ dmypy.json
 **/*.zip
 **/zdp_*
 **/logs
+**/config/secret

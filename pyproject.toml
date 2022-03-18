@@ -8,6 +8,7 @@ authors = ["zhangdapeng520 <pygosuperman@outlook.com>"]
 python = "^3.9"
 pymetasploit3 = "^1.0.3"
 zdppy-log = "^0.1.7"
+zdppy-yaml = "^0.1.1"
 
 [tool.poetry.dev-dependencies]
 
