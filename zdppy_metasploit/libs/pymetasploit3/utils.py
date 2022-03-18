@@ -25,19 +25,27 @@ def parseargs():
         exit(-1)
     return o
 
+
 def convert(data, encoding="utf-8"):
     """
-    Converts all bytestrings to utf8
+    转换响应数据
     """
-    if isinstance(data, bytes):  return data.decode(encoding=encoding)
-    if isinstance(data, list):   return list(map(lambda iter: convert(iter, encoding=encoding), data))
-    if isinstance(data, set):    return set(map(lambda iter: convert(iter, encoding=encoding), data))
-    if isinstance(data, dict):   return dict(map(lambda iter: convert(iter, encoding=encoding), data.items()))
-    if isinstance(data, tuple):  return map(lambda iter: convert(iter, encoding=encoding), data)
+    if isinstance(data, bytes):
+        return data.decode(encoding=encoding)
+    if isinstance(data, list):
+        return list(map(lambda iter: convert(iter, encoding=encoding), data))
+    if isinstance(data, set):
+        return set(map(lambda iter: convert(iter, encoding=encoding), data))
+    if isinstance(data, dict):
+        return dict(map(lambda iter: convert(iter, encoding=encoding), data.items()))
+    if isinstance(data, tuple):
+        return map(lambda iter: convert(iter, encoding=encoding), data)
     return data
+
 
 def encode(data):
     return msgpack.packb(data)
+
 
 def decode(data):
     return msgpack.unpackb(data, strict_map_key=False)

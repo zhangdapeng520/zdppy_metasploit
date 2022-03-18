@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 from numbers import Number
-from pymetasploit3.utils import *
+from typing import List
+
+from .utils import *
 import requests
 import uuid
 import time
@@ -183,48 +185,72 @@ class MsfAuthError(MsfError):
         self.msg = msg
 
 
-class MsfRpcClient(object):
+class MsfRpcClient:
     """
     Metasploit RPC远程连接对象
     """
 
-    def __init__(self, password, log=None, **kwargs):
+    def __init__(self, password, log, **kwargs):
         self.uri = kwargs.get('uri', '/api/')  # 路径
         self.port = kwargs.get('port', 55553)  # 端口
         self.host = kwargs.get('server', '127.0.0.1')  # 主机地址
-        self.ssl = kwargs.get('ssl', False)  # 是否开启ssl
+        self.ssl: bool = kwargs.get('ssl', False)  # 是否开启ssl
         self.token = kwargs.get('token')  # token
         self.encoding = kwargs.get('encoding', 'utf-8')  # 编码
         self.headers = {"Content-type": "binary/message-pack"}  # 请求头
-        self.login(kwargs.get('username', 'msf'), password)  # 登录
         self.log = log  # 日志
+        self.log.debug("创建日志对象成功")
+        self.login(kwargs.get('username', 'msf'), password)  # 登录
 
-    def call(self, method, opts=None, is_raw=False):
+    def call(self,
+             method: str = None,
+             opts: List = None,
+             is_raw: bool = False
+             ):
+        """
+        最核心的方法，用于远程调用MSF的相关接口
+        :param method: 方法名称
+        :param opts: 方法参数
+        :param is_raw: 是否为文本流
+        :return:
+        """
+        # 如果参数不是一个列表，则置为一个列表
         if not isinstance(opts, list):
             opts = []
-        if method != 'auth.login':
-            if self.token is None:
-                raise MsfAuthError("MsfRPC: Not Authenticated")
 
+        # 如果是登录方法，则校验Token
+        if method == 'auth.login':
+            if self.token is None:
+                raise MsfAuthError("权限校验失败")
+
+        # 如果不是登录方法，则插入token
         if method != "auth.login":
             opts.insert(0, self.token)
 
-        if self.ssl is True:
-            url = "https://%s:%s%s" % (self.host, self.port, self.uri)
-        else:
-            url = "http://%s:%s%s" % (self.host, self.port, self.uri)
+        # 获取请求路径
+        prefix = "https" if self.ssl else "http"
+        url = f"{prefix}://{self.host}:{self.port}{self.uri}"
 
+        # 插入参数
         opts.insert(0, method)
+
+        # 编码参数
+        self.log.debug(f"编码参数：{opts}")
         payload = encode(opts)
 
+        # 发送请求
+        self.log.info(f"发送请求：{url} {payload} ")
         r = self.post_request(url, payload)
 
-        opts[:] = []  # Clear opts list
+        # 情况参数
+        opts.clear()
 
+        # 如果是二进制请求，则返回响应流
         if is_raw:
             return r.content
 
-        return convert(decode(r.content), self.encoding)  # convert all keys/vals to utf8
+        # 解码响应并返回
+        return convert(decode(r.content), self.encoding)
 
     @retry(tries=3, delay=1, backoff=2)
     def post_request(self, url, payload):

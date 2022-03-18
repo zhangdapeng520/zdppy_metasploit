@@ -3,6 +3,9 @@ from zdppy_log import Log
 
 
 class Metasploit:
+    # 全局缓存对象
+    cache_dict = dict()
+
     def __init__(self,
                  username: str = "msf",
                  password: str = "zhangdapeng",
@@ -45,10 +48,12 @@ class Metasploit:
 
         # 日志对象
         self.log = Log(log_file_path=log_file_path, debug=debug)
+        self.log.debug("创建日志对象成功")
 
         # 创建rpc客户端
         self.client = MsfRpcClient(
             password,
+            self.log,
             uri=path,
             port=port,
             server=host,
@@ -56,6 +61,14 @@ class Metasploit:
             token=token,
             encoding=encoding,
             headers=headers,
-            username=username,
-            log=self.log
+            username=username
         )
+
+        # 方法区
+        self.call = self.client.call
+
+    def call(self):
+        """
+        最核心的方法，用于远程调用
+        :return:
+        """
