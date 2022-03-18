@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from numbers import Number
-from typing import List
+from typing import List, Tuple, Union
 
 from .utils import *
 import requests
@@ -204,7 +204,7 @@ class MsfRpcClient:
 
     def call(self,
              method: str = None,
-             opts: List = None,
+             opts: Union[int, float, str, List, Tuple] = None,
              is_raw: bool = False
              ):
         """
@@ -214,12 +214,16 @@ class MsfRpcClient:
         :param is_raw: 是否为文本流
         :return:
         """
-        # 如果参数不是一个列表，则置为一个列表
-        if not isinstance(opts, list):
-            opts = []
+        # 处理参数
+        if isinstance(opts, str) or isinstance(opts, int) or isinstance(opts, float):
+            opts = [str(opts)]
+        elif isinstance(opts, tuple) or isinstance(opts, list):
+            opts = list(opts)
+        else:
+            opts = list()
 
-        # 如果是登录方法，则校验Token
-        if method == 'auth.login':
+        # 如果不是登录方法，则校验Token
+        if method != 'auth.login':
             if self.token is None:
                 raise MsfAuthError("权限校验失败")
 
@@ -239,7 +243,7 @@ class MsfRpcClient:
         payload = encode(opts)
 
         # 发送请求
-        self.log.info(f"发送请求：{url} {payload} ")
+        self.log.debug(f"发送请求：{url} {payload} ")
         r = self.post_request(url, payload)
 
         # 情况参数
@@ -858,7 +862,7 @@ class Workspace(object):
         Initializes a workspace object.
 
         Mandatory Arguments:
-        - rpc : the msfrpc client object
+        - z01_rpc : the msfrpc client object
         - name : the name of the workspace
         """
         self.rpc = rpc
@@ -953,7 +957,7 @@ class MsfManager(object):
         Initialize a msf component manager.
 
         Mandatory Arguments:
-        - rpc : the msfrpc client object.
+        - z01_rpc : the msfrpc client object.
         """
         self.rpc = rpc
 
@@ -1292,7 +1296,7 @@ class MsfModule(object):
         Initializes an msf module object.
 
         Mandatory Arguments:
-        - rpc : the msfrpc client object.
+        - z01_rpc : the msfrpc client object.
         - mtype : the module type (e.g. 'exploit')
         - mname : the module name (e.g. 'exploits/windows/http/icecast_header')
         """
@@ -1491,7 +1495,7 @@ class ExploitModule(MsfModule):
         Initializes the use of an exploit module.
 
         Mandatory Arguments:
-        - rpc : the rpc client used to communicate with msfrpcd
+        - z01_rpc : the z01_rpc client used to communicate with msfrpcd
         - exploit : the name of the exploit module.
         """
         super(ExploitModule, self).__init__(rpc, 'exploit', exploit)
@@ -1502,7 +1506,7 @@ class ExploitModule(MsfModule):
         """
         A list of compatible payloads.
         """
-        #        return self.rpc.call(MsfRpcMethod.ModuleCompatiblePayloads, self.modulename)['payloads']
+        #        return self.z01_rpc.call(MsfRpcMethod.ModuleCompatiblePayloads, self.modulename)['payloads']
         return self.targetpayloads(self.target)
 
     @property
@@ -1532,7 +1536,7 @@ class PostModule(MsfModule):
         Initializes the use of a post exploitation module.
 
         Mandatory Arguments:
-        - rpc : the rpc client used to communicate with msfrpcd
+        - z01_rpc : the z01_rpc client used to communicate with msfrpcd
         - post : the name of the post exploitation module.
         """
         super(PostModule, self).__init__(rpc, 'post', post)
@@ -1564,7 +1568,7 @@ class EncoderModule(MsfModule):
         Initializes the use of an encoder module.
 
         Mandatory Arguments:
-        - rpc : the rpc client used to communicate with msfrpcd
+        - z01_rpc : the z01_rpc client used to communicate with msfrpcd
         - encoder : the name of the encoder module.
         """
         super(EncoderModule, self).__init__(rpc, 'encoder', encoder)
@@ -1577,7 +1581,7 @@ class AuxiliaryModule(MsfModule):
         Initializes the use of an auxiliary module.
 
         Mandatory Arguments:
-        - rpc : the rpc client used to communicate with msfrpcd
+        - z01_rpc : the z01_rpc client used to communicate with msfrpcd
         - auxiliary : the name of the auxiliary module.
         """
         super(AuxiliaryModule, self).__init__(rpc, 'auxiliary', auxiliary)
@@ -1602,7 +1606,7 @@ class PayloadModule(MsfModule):
         Initializes the use of a payload module.
 
         Mandatory Arguments:
-        - rpc : the rpc client used to communicate with msfrpcd
+        - z01_rpc : the z01_rpc client used to communicate with msfrpcd
         - payload : the name of the payload module.
         """
         super(PayloadModule, self).__init__(rpc, 'payload', payload)
@@ -1615,7 +1619,7 @@ class NopModule(MsfModule):
         Initializes the use of a nop module.
 
         Mandatory Arguments:
-        - rpc : the rpc client used to communicate with msfrpcd
+        - z01_rpc : the z01_rpc client used to communicate with msfrpcd
         - nop : the name of the nop module.
         """
         super(NopModule, self).__init__(rpc, 'nop', nop)
@@ -1731,7 +1735,7 @@ class MsfSession(object):
 
         Mandatory Arguments:
         - sid : the session identifier.
-        - rpc : the msfrpc client object.
+        - z01_rpc : the msfrpc client object.
         - sd : the session description
         """
         self.sid = sid
@@ -2099,7 +2103,7 @@ class MsfConsole(object):
         Initializes an msf console.
 
         Mandatory Arguments:
-        - rpc : the msfrpc client object.
+        - z01_rpc : the msfrpc client object.
 
         Optional Keyword Arguments:
         - cid : the console identifier if it exists already otherwise a new one will be created.

@@ -17,7 +17,7 @@ class MsfRpcConsole(object):
         Emulates the msfconsole in msf except over RPC.
 
         Mandatory Arguments:
-        - rpc : an msfrpc client object
+        - z01_rpc : an msfrpc client object
 
         Optional Arguments:
         - cb : a callback function that gets called when data is received from the console.
