@@ -7,3 +7,4 @@ from .rpc.auth import auth
 from .rpc.console import console
 from .rpc.job import job
 from .rpc.module import module
+from .rpc.plugin import plugin
