@@ -1,5 +1,12 @@
+import random
+from typing import Dict, List
+
+import item as item
+
 from .libs.pymetasploit3.msfrpc import MsfRpcClient
 from zdppy_log import Log
+from .rpc.console import console
+from .exceptions import NotfoundError
 
 
 class Metasploit:
@@ -18,6 +25,7 @@ class Metasploit:
                  headers: dict = {"Content-type": "binary/message-pack"},
                  debug: bool = True,
                  log_file_path: str = "logs/zdppy/zdppy_metasploit.log",
+                 console_pool_size: int = 33,  # console池子对象个数
                  ):
         """
         创建MSF核心对象
@@ -45,6 +53,7 @@ class Metasploit:
         self.headers = headers
         self.debug = debug
         self.__log_file_path = log_file_path
+        self.console_pool_size = console_pool_size
 
         # 日志对象
         self.log = Log(log_file_path=log_file_path, debug=debug)
@@ -67,8 +76,68 @@ class Metasploit:
         # 方法区
         self.call = self.client.call
 
-    def call(self):
+        # console id列表
+        self.consoles: List[str] = []
+
+    def __init_consoles(self):
         """
-        最核心的方法，用于远程调用
+        初始化console字典
         :return:
         """
+        self.log.debug("初始化控制台列表")
+        result = self.call(console.list)
+        self.log.debug(f"获取控制台列表：{result}")
+        consoles = result.get('consoles')
+
+        # 合并已有的console
+        if consoles is not None:
+            temp_consoles = [i["id"] for i in consoles if not i["busy"]]
+            self.consoles.extend(temp_consoles)
+            self.log.debug(f"合并已有的console成功：{self.consoles}")
+
+        # 创建一个新的可用的console
+        else:
+            for _ in range(self.console_pool_size):
+                # 创建console
+                result = self.call(console.create)
+                self.log.debug(f"创建console：{result}")
+
+                # 获取控制台输出
+                console_id = result.get('id')
+                result = self.call(console.read, console_id)
+                self.log.debug(f"创建console控制台输出：{result}")
+
+                # 添加到console池子
+                if console_id is not None:
+                    self.consoles.append(console_id)
+                else:
+                    raise NotfoundError("找不到可用的console")
+
+    def run_cmd(self, cmd: str, only_data=True):
+        """
+        执行CMD命令
+        :param cmd 要执行的cmd命令
+        :param only_data 只获取data数据
+        :return:
+        """
+        # 需要初始化console池子
+        if len(self.consoles) == 0:
+            self.__init_consoles()
+
+        # 负载均衡：随机的取一个console
+        console_id = self.consoles.pop()
+        self.log.debug(f"获取随机的console成功：{console_id} {self.consoles}")
+
+        # 执行命令
+        self.log.debug(f"执行命令：{cmd}")
+        self.call(console.write, [console_id, f"{cmd}\n"])
+        result = self.call(console.read, console_id)
+        self.log.debug(f"控制台输出：{result}")
+
+        # 将console归还到池子
+        self.consoles.append(console_id)
+
+        # 返回命令输出结果
+        if only_data:
+            return result.get("data")
+        return result

@@ -53,6 +53,10 @@ class Module:
 
     @property
     def execute(self):
+        """
+        支持的类型：exploit、auxiliary、post、payload、evasion
+        :return:
+        """
         return "module.execute"
 
     @property
