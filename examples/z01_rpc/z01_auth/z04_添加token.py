@@ -1,13 +1,10 @@
 from zdppy_metasploit import *
 
-msf = new_metasploit()
-
-# 查看token
-print(msf.call(auth.token_list))
+msf = new_metasploit(host="192.168.213.131", port=55553)
 
 # 添加token
-print(msf.call("auth.token_add", ["aaa"]))
-print(msf.call(auth.token_add, ["bbb"]))
+msf.log.debug("添加token", msf.call("auth.token_add", ["aaa"]))
 
-# 查看token
-print(msf.call(auth.token_list))
+# 使用方法添加token
+result = msf.add_token("aaa")
+msf.log.debug("使用方法添加token", result=result.to_dict())

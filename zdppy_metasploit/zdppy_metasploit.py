@@ -1,8 +1,36 @@
+import json
 from typing import List, Tuple, Union
 from .pymetasploit3.msfrpc import MsfRpcClient
 from zdppy_log import Log
-from .rpc.console import console
 from .exceptions import NotfoundError, ParamError, InternalError
+
+
+class Result:
+    """
+    响应结果
+    """
+
+    def __init__(self,
+                 status: bool = True,
+                 result: str = "success",
+                 token: str = "",
+                 token_list: List[str] = None,
+                 ):
+        self.status: bool = status
+        self.result: str = result
+        self.token: str = token
+        self.token_list: List[str] = token_list
+
+    def to_dict(self):
+        return {
+            "status": self.status,
+            "result": self.result,
+            "token": self.token,
+            "token_list": self.token_list,
+        }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
 
 class Metasploit:
@@ -80,7 +108,7 @@ class Metasploit:
         初始化console字典
         :return:
         """
-        result = self.call(console.list)
+        result = self.call("console.list")
         consoles = result.get('consoles', None)
 
         # 合并已有的console
@@ -92,17 +120,64 @@ class Metasploit:
         else:
             for _ in range(self.console_pool_size):
                 # 创建console
-                result = self.call(console.create)
+                result = self.call("console.create")
 
                 # 获取控制台输出
                 console_id = result.get('id')
-                result = self.call(console.read, console_id)
+                result = self.call("console.read", console_id)
 
                 # 添加到console池子
                 if console_id is not None:
                     self.consoles.append(console_id)
                 else:
                     raise NotfoundError("找不到可用的console")
+
+    def login(self) -> Result:
+        """
+        登录并获取token
+        """
+        result = self.call("auth.login", [self.username, self.password], is_raw=False)
+        r = Result(result=result.get("result"), token=result.get("token"))
+        return r
+
+    def generate_token(self) -> Result:
+        """
+        生成token
+        """
+        result = self.call("auth.token_generate", [], is_raw=False)
+        r = Result(result=result.get("result"), token=result.get("token"))
+        return r
+
+    def get_token_list(self) -> Result:
+        """
+        获取token列表
+        """
+        result = self.call("auth.token_list")
+        r = Result(token_list=result.get("tokens"))
+        return r
+
+    def add_token(self, *tokens: str) -> Result:
+        """
+        添加token，可以同时添加多个
+        """
+        if len(tokens) == 0:
+            self.log.error("要添加的token不能少于1个", tokens=tokens)
+            return Result(result="fail", status=False)
+
+        # 添加token
+        result = self.call("auth.token_add", tokens)
+
+        # 获取token列表
+        r = self.get_token_list()
+
+        # token为刚添加的第一个token
+        r.token = tokens[0]
+
+        # 添加结果
+        r.result = result.get("result")
+
+        # 返回
+        return r
 
     def run_cmd(self, cmd: Union[str, List, Tuple], only_data=True):
         """
@@ -123,12 +198,12 @@ class Metasploit:
         # 执行命令
         result = None
         if isinstance(cmd, str):
-            self.call(console.write, [console_id, f"{cmd}\n"])
-            result = self.call(console.read, console_id)
+            self.call("console.write", [console_id, f"{cmd}\n"])
+            result = self.call("console.read", console_id)
         elif isinstance(cmd, list) or isinstance(cmd, tuple):
             for c in cmd:
-                self.call(console.write, [console_id, f"{c}\n"])
-                result = self.call(console.read, console_id)
+                self.call("console.write", [console_id, f"{c}\n"])
+                result = self.call("console.read", console_id)
         else:
             raise ParamError("cmd参数格式错误")
 
