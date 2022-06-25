@@ -1,11 +1,7 @@
 from zdppy_metasploit import *
 
-msf = new_metasploit()
+msf = new_metasploit(host="192.168.213.131", port=55553)
 
 # 第一种调用方式
-print(msf.call("auth.login", ["msf", "zhangdapeng"], is_raw=False))
-print(msf.call("auth.login", ["msf", "zhangdapeng1"], is_raw=False))
-
-# 第二种调用方式
-print(msf.call(auth.login, ["msf", "zhangdapeng"]))
-print(msf.call(auth.login, ["msf", "zhangdapeng1"]))
+result = msf.call("auth.login", ["msf", "zhangdapeng"], is_raw=False)
+msf.log.debug(f"获取token成功", result=result)

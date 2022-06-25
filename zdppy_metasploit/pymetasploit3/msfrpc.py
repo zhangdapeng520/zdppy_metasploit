@@ -199,7 +199,6 @@ class MsfRpcClient:
         self.encoding = kwargs.get('encoding', 'utf-8')  # 编码
         self.headers = {"Content-type": "binary/message-pack"}  # 请求头
         self.log = log  # 日志
-        self.log.debug("创建日志对象成功")
         self.login(kwargs.get('username', 'msf'), password)  # 登录
 
     def call(self,
@@ -237,14 +236,11 @@ class MsfRpcClient:
 
         # 插入参数
         opts.insert(0, method)
-        self.log.debug(f"传递的参数：{opts}")
 
         # 编码参数
-        self.log.debug(f"编码参数：{opts}")
         payload = encode(opts)
 
         # 发送请求
-        self.log.debug(f"发送请求：{url} {payload} ")
         r = self.post_request(url, payload)
 
         # 情况参数

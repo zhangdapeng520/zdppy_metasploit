@@ -1,9 +1,5 @@
-import random
-from typing import Dict, List, Tuple, Union
-
-import item as item
-
-from .libs.pymetasploit3.msfrpc import MsfRpcClient
+from typing import List, Tuple, Union
+from .pymetasploit3.msfrpc import MsfRpcClient
 from zdppy_log import Log
 from .rpc.console import console
 from .exceptions import NotfoundError, ParamError, InternalError
@@ -57,7 +53,6 @@ class Metasploit:
 
         # 日志对象
         self.log = Log(log_file_path=log_file_path, debug=debug)
-        self.log.debug("创建日志对象成功")
 
         # 创建rpc客户端
         self.client = MsfRpcClient(
@@ -85,28 +80,23 @@ class Metasploit:
         初始化console字典
         :return:
         """
-        self.log.debug("初始化控制台列表")
         result = self.call(console.list)
-        self.log.debug(f"获取控制台列表：{result}")
         consoles = result.get('consoles', None)
 
         # 合并已有的console
         if consoles:
             temp_consoles = [i["id"] for i in consoles if not i["busy"]]
             self.consoles.extend(temp_consoles)
-            self.log.debug(f"合并已有的console成功：{self.consoles}")
 
         # 创建一个新的可用的console
         else:
             for _ in range(self.console_pool_size):
                 # 创建console
                 result = self.call(console.create)
-                self.log.debug(f"创建console：{result}")
 
                 # 获取控制台输出
                 console_id = result.get('id')
                 result = self.call(console.read, console_id)
-                self.log.debug(f"创建console控制台输出：{result}")
 
                 # 添加到console池子
                 if console_id is not None:
@@ -129,21 +119,16 @@ class Metasploit:
 
         # 负载均衡：随机的取一个console
         console_id = self.consoles.pop()
-        self.log.debug(f"获取随机的console成功：{console_id} {self.consoles}")
 
         # 执行命令
         result = None
         if isinstance(cmd, str):
-            self.log.debug(f"执行命令：{cmd}")
             self.call(console.write, [console_id, f"{cmd}\n"])
             result = self.call(console.read, console_id)
-            self.log.debug(f"控制台输出：{result}")
         elif isinstance(cmd, list) or isinstance(cmd, tuple):
             for c in cmd:
-                self.log.debug(f"执行命令：{c}")
                 self.call(console.write, [console_id, f"{c}\n"])
                 result = self.call(console.read, console_id)
-                self.log.debug(f"控制台输出：{result}")
         else:
             raise ParamError("cmd参数格式错误")
 
