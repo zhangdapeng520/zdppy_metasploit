@@ -1,19 +1,14 @@
 from zdppy_metasploit import *
 
-msf = new_metasploit()
+msf = new_metasploit(host="192.168.213.131", port=55553)
 
-msf.log.info(msf.call("core.setg", ["username", "zhangdapeng"]))
-msf.log.info(msf.call(core.setg, ["password", "zhangdapeng"]))
-msf.log.info(msf.call(core.set, ["age", "22"]))
+# 添加
+msf.log.debug(msf.set("age", 33))
 
-msf.log.info(msf.call("core.getg", ["username"]))
-msf.log.info(msf.call(core.getg, ["password"]))
-msf.log.info(msf.call(core.get, ["age"]))
+# 获取
+msf.log.debug(msf.get("age"))
 
-msf.log.info(msf.call("core.unsetg", ["username"]))
-msf.log.info(msf.call(core.unsetg, ["password"]))
-msf.log.info(msf.call(core.delete, ["age"]))
-
-msf.log.info(msf.call("core.getg", ["username"]))
-msf.log.info(msf.call(core.getg, ["password"]))
-msf.log.info(msf.call(core.get, ["age"]))
+# 删除
+msf.log.debug(msf.call("core.unsetg", ["username"]))
+msf.log.debug(msf.delete("age"))
+msf.log.debug(msf.delete("age1"))

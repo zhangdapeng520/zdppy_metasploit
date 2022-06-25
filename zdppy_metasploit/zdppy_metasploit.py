@@ -1,5 +1,5 @@
 import json
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict, Any
 from .pymetasploit3.msfrpc import MsfRpcClient
 from zdppy_log import Log
 from .exceptions import NotfoundError, ParamError, InternalError
@@ -15,22 +15,47 @@ class Result:
                  result: str = "success",
                  token: str = "",
                  token_list: List[str] = None,
+                 error_message: str = "",
+                 data: Dict = None
                  ):
         self.status: bool = status
         self.result: str = result
         self.token: str = token
         self.token_list: List[str] = token_list
+        self.error_message = error_message
+        self.data = data
 
     def to_dict(self):
-        return {
+        r = {
             "status": self.status,
-            "result": self.result,
-            "token": self.token,
-            "token_list": self.token_list,
+            "result": self.result or "success"
         }
+        if self.token:
+            r["token"] = self.token
+        if self.token_list:
+            r["token_list"] = self.token_list
+        if self.error_message:
+            r["error_message"] = self.error_message
+        if self.data:
+            r["data"] = self.data
+        return r
 
     def to_json(self):
-        return json.dumps(self.to_dict())
+        return json.dumps(self.to_dict(), ensure_ascii=False)
+
+    def __str__(self):
+        return self.to_json()
+
+    def __repr__(self):
+        return self.to_json()
+
+
+def get_fail_result(error_message: str = "") -> Result:
+    """
+    获取失败的结果
+    """
+    fail_result = Result(status=False, result="fail", error_message=error_message)
+    return fail_result
 
 
 class Metasploit:
@@ -48,7 +73,7 @@ class Metasploit:
                  encoding: str = "utf8",
                  headers: dict = {"Content-type": "binary/message-pack"},
                  debug: bool = True,
-                 log_file_path: str = "logs/zdppy/zdppy_metasploit.log",
+                 log_file_path: str = "log.log",
                  console_pool_size: int = 3,  # console池子对象个数
                  ):
         """
@@ -140,6 +165,22 @@ class Metasploit:
         r = Result(result=result.get("result"), token=result.get("token"))
         return r
 
+    def version(self) -> Result:
+        """
+        获取版本信息
+        """
+        return Result(data=dict(self.call("core.version")))
+
+    def stop(self) -> Result:
+        """
+        停止服务
+        """
+        try:
+            self.call("core.stop")
+        finally:
+            pass
+        return Result()
+
     def generate_token(self) -> Result:
         """
         生成token
@@ -178,6 +219,113 @@ class Metasploit:
 
         # 返回
         return r
+
+    def delete_token(self, *tokens: str) -> Result:
+        """
+        删除token，支持批量删除
+        """
+        if len(tokens) == 0:
+            self.log.error("要删除的token不能少于1个")
+            return Result(status=False, result="fail")
+
+        # 删除
+        result = self.call("auth.token_remove", tokens)
+
+        # 获取token列表
+        r = self.get_token_list()
+        r.result = result.get("result")
+        r.token = tokens[0]
+
+        # 返回
+        return r
+
+    def add_module_path(self, *paths: str) -> Result:
+        """
+        添加模块路径
+        """
+        if len(paths) == 0:
+            self.log.error("添加模块路径失败，要添加的模块路径个数不能少于1", paths=paths)
+            return get_fail_result(error_message="要添加的模块路径个数不能少于1")
+
+        # 添加模块路径
+        result = self.call("core.add_module_path", paths)
+        if result.get("error"):
+            return get_fail_result(result.get("error_message"))
+
+        # 添加成功
+        r = Result(result=result.get("result") or "success")
+        r.data = dict(result)
+        return r
+
+    def get_module_status(self) -> Result:
+        """
+        获取模块状态
+        """
+        result = self.call("core.module_stats")
+        return Result(data=dict(result))
+
+    def reload_modules(self) -> Result:
+        """
+        重新加载模块
+        """
+        result = self.call("core.reload_modules")
+        return Result(data=dict(result))
+
+    def save(self) -> Result:
+        """
+        保存配置
+        """
+        result = self.call("core.save")
+        if result.get("result") == "success":
+            return Result()
+        return get_fail_result(result.get("error_message"))
+
+    def set(self, key: str, value: Any) -> Result:
+        """
+        设置全局变量
+        """
+        # 调用方法
+        result = self.call("core.setg", [key, value])
+
+        # 判断结果并返回
+        if result.get("result") == "success":
+            return Result()
+        return get_fail_result(error_message=result.get("error_message"))
+
+    def get(self, key: str) -> Result:
+        """
+        根据键获取值
+        """
+        result = self.call("core.getg", [key])
+        if result.get(key):
+            return Result(data=dict(result))
+        return get_fail_result("找不到该key对应的value")
+
+    def delete(self, key: str) -> Result:
+        """
+        删除全局变量
+        """
+        # 这个请求始终返回的是success，不存在删除失败的情况
+        self.call("core.unsetg", [key])
+        return Result()
+
+    def get_thread_list(self) -> Result:
+        """
+        获取进程列表
+        """
+        return Result(data=dict(self.call("core.thread_list")))
+
+    def delete_thread(self, thread_id: int) -> Result:
+        """
+        杀死进程，删除进程
+        """
+        # 杀死进程
+        result = self.call("core.thread_kill", thread_id)
+
+        # 判断结果
+        if result.get("error"):
+            return get_fail_result(error_message=result.get("error_message"))
+        return Result()
 
     def run_cmd(self, cmd: Union[str, List, Tuple], only_data=True):
         """
