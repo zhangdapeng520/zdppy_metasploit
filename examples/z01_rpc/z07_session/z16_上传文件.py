@@ -1,6 +1,6 @@
 from zdppy_metasploit import *
 
-msf = new_metasploit()
+msf = new_metasploit(host="192.168.213.131", port=55553)
 
 
 def demo1():
@@ -9,8 +9,8 @@ def demo1():
     :return:
     """
     options = [2, "upload Rakefile /tmp/Rakefile"]
-    msf.log.info(msf.call(session.meterpreter_write, options))
-    msf.log.info(msf.call(session.meterpreter_read, 2))
+    msf.log.info(msf.call("session.meterpreter_write", options))
+    msf.log.info(msf.call("session.meterpreter_read", 2))
 
 
 def demo2():

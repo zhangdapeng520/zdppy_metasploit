@@ -1,6 +1,6 @@
 from zdppy_metasploit import *
 
-msf = new_metasploit()
+msf = new_metasploit(host="192.168.213.131", port=55553)
 
 
 def demo1():
@@ -10,7 +10,6 @@ def demo1():
     """
     options = [1, "0.0.0.0", 8888]
     msf.log.info(msf.call("session.shell_upgrade", options))
-    msf.log.info(msf.call(session.shell_upgrade, options))
 
 
 def demo2():

@@ -1,6 +1,0 @@
-path: "/api/"
-is_ssl: true
-token: ""
-encoding: "utf-8"
-headers:
-  Content-type: "binary/message-pack"

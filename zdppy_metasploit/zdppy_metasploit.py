@@ -54,7 +54,7 @@ def get_fail_result(error_message: str = "") -> Result:
     """
     获取失败的结果
     """
-    fail_result = Result(status=False, result="fail", error_message=error_message)
+    fail_result = Result(status=False, result="failure", error_message=error_message)
     return fail_result
 
 
@@ -156,6 +156,21 @@ class Metasploit:
                     self.consoles.append(console_id)
                 else:
                     raise NotfoundError("找不到可用的console")
+
+    def get_module_exploits(self) -> Result:
+        """
+        获取可利用的模块
+        """
+        return Result(data=self.call("module.exploits"))
+
+    def health(self) -> Result:
+        """
+        健康检查
+        """
+        data = self.call("health.check", None)
+        if data.get("status") == "UP":
+            return Result()
+        return get_fail_result()
 
     def login(self) -> Result:
         """
@@ -315,6 +330,28 @@ class Metasploit:
         """
         return Result(data=dict(self.call("core.thread_list")))
 
+    def write_console(self, console_id: int, command: str) -> Result:
+        """
+        向控制台写入命令
+        """
+        data = self.call("console.write", [str(console_id), f"{command}\n"])
+        return Result(data=data)
+
+    def get_console_list(self) -> Result:
+        """
+        获取console列表
+        """
+        return Result(data=self.call("console.list"))
+
+    def delete_console_session(self, console_id: int) -> Result:
+        """
+        关闭console会话，但是不会销毁console
+        """
+        data = self.call("console.session_kill", [console_id])
+        if data.get("result") == "success":
+            return Result()
+        return get_fail_result()
+
     def delete_thread(self, thread_id: int) -> Result:
         """
         杀死进程，删除进程
@@ -326,6 +363,29 @@ class Metasploit:
         if result.get("error"):
             return get_fail_result(error_message=result.get("error_message"))
         return Result()
+
+    def add_console(self) -> Result:
+        """
+        添加console
+        """
+        result = self.call("console.create")
+        return Result(data=dict(result))
+
+    def read_console(self, console_id: int):
+        """
+        读取console数据
+        """
+        data = self.call("console.read", console_id)
+        return Result(data=data)
+
+    def delete_console(self, console_id: int) -> Result:
+        """
+        删除console
+        """
+        result = self.call("console.destroy", console_id)
+        if result.get("result") == "success":
+            return Result()
+        return get_fail_result("删除console失败")
 
     def run_cmd(self, cmd: Union[str, List, Tuple], only_data=True):
         """

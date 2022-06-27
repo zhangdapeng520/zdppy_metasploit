@@ -1,9 +1,7 @@
 from zdppy_metasploit import *
 
-msf = new_metasploit()
+msf = new_metasploit(host="192.168.213.131", port=55553)
 
 options = None
 msf.log.info(msf.call("session.list", options))
 
-result = msf.call(session.list, options)
-msf.log.info(list(result.keys()))
